@@ -22,17 +22,17 @@ post '/post' => sub {
         $c->session->set( post_success => 1 );
     }
 
-    return $c->redirect('/result');
+    return $c->redirect('/messages');
 };
 
-get '/result' => sub {
+get '/messages' => sub {
     my $c = shift;
     my $s = $c->session;
 
     my $success = $s->get('post_success');
     $s->remove('post_success') if $success;
 
-    return $c->render( 'result.tt', { posts => \@posts, success => $success } );
+    return $c->render( 'messages.tt', { posts => \@posts, success => $success } );
 };
 
 __PACKAGE__->enable_session;
@@ -40,7 +40,7 @@ __PACKAGE__->to_app;
 
 __DATA__
 
-@@ result.tt
+@@ messages.tt
 [% WRAPPER "layout.tt" %]
 <h2>Guestbook Messages</h2>
 [% IF success -%]
@@ -107,7 +107,7 @@ __DATA__
           <ul class="well nav nav-list">
             <li class="nav-header">Guestbook</li>
             <li><a href="[% uri_for('/') %]">Home</a></li>
-            <li><a href="[% uri_for('/result') %]">Messages</a></li>
+            <li><a href="[% uri_for('/messages') %]">Messages</a></li>
             <li class="divider"></li>
             <li><a href="http://amon.64p.org">Amon2</a></li>
             <li><a href="http://zakame.net">Zakame.Net</a></li>
