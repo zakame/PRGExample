@@ -35,6 +35,7 @@ get '/messages' => sub {
     return $c->render( 'messages.tt', { posts => \@posts, success => $success } );
 };
 
+__PACKAGE__->template_options( cache => 0 );
 __PACKAGE__->enable_session;
 __PACKAGE__->to_app;
 
