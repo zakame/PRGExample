@@ -5,8 +5,54 @@ use warnings;
 use utf8;
 use v5.14;
 use Amon2::Lite;
+use File::Basename;
+use File::Spec;
 
-my @posts = ();
+{
+
+    package PRGExample::Model;
+    use parent 'Teng';
+
+    sub insert_post {
+        my ( $self, $name, $message ) = @_;
+        return $self->insert(
+            posts => { name => $name, message => $message } );
+    }
+
+    sub get_all_posts {
+        return shift->search( posts => {} );
+    }
+
+    package PRGExample::Model::Schema;
+    use Teng::Schema::Declare;
+
+    table {
+        name 'posts';
+        pk 'id';
+        columns qw( name message );
+    };
+
+}
+
+my $postsdb = File::Spec->catfile( dirname(__FILE__), 'posts.db' );
+my $posts = PRGExample::Model->new(
+    { connect_info => ["dbi:SQLite:dbname=$postsdb"] } );
+
+=for later
+
+if ( @ARGV and my $arg = ( shift =~ /db-create/ ) ) {
+    $posts->do(<<SQL);
+CREATE TABLE posts (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name    TEXT,
+    message TEXT
+);
+SQL
+    say "db-create called!";
+    exit 0;
+}
+
+=cut
 
 get '/' => sub {
     return shift->render('form.tt');
@@ -18,8 +64,8 @@ post '/post' => sub {
     my $p = $c->req->parameters->mixed;
 
     if ( $p->{name} and $p->{message} ) {
-        push @posts, $p;
-        $c->session->set( post_success => 1 );
+        $c->session->set( post_success => 1 )
+            if $posts->insert_post( $p->{name}, $p->{message} );
     }
 
     return $c->redirect('/messages');
@@ -32,7 +78,10 @@ get '/messages' => sub {
     my $success = $s->get('post_success');
     $s->remove('post_success') if $success;
 
-    return $c->render( 'messages.tt', { posts => \@posts, success => $success } );
+    my @posts = $posts->get_all_posts;
+
+    return $c->render( 'messages.tt',
+        { posts => \@posts, success => $success } );
 };
 
 __PACKAGE__->template_options( cache => 0 );
