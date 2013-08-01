@@ -23,6 +23,16 @@ use File::Spec;
         return shift->search( posts => {} );
     }
 
+    sub create_db {
+        shift->do(<<SQL);
+CREATE TABLE posts ( 
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name    TEXT,
+    message TEXT
+);
+SQL
+    }
+
     package PRGExample::Model::Schema;
     use Teng::Schema::Declare;
 
@@ -38,21 +48,11 @@ my $postsdb = File::Spec->catfile( dirname(__FILE__), 'posts.db' );
 my $posts = PRGExample::Model->new(
     { connect_info => ["dbi:SQLite:dbname=$postsdb"] } );
 
-=for later
-
-if ( @ARGV and my $arg = ( shift =~ /db-create/ ) ) {
-    $posts->do(<<SQL);
-CREATE TABLE posts (
-    id      INTEGER PRIMARY KEY AUTOINCREMENT,
-    name    TEXT,
-    message TEXT
-);
-SQL
-    say "db-create called!";
+if ( @ARGV and my $arg = ( shift =~ /createdb/ ) ) {
+    $posts->create_db;
+    say "posts database created!";
     exit 0;
 }
-
-=cut
 
 get '/' => sub {
     return shift->render('form.tt');
